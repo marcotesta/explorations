@@ -101,7 +101,7 @@ public class Tail implements Runnable {
 
         if (args.length != 1) {
             System.out.println(
-                    "Usage:java it.mondogrua.exploration.Tail <filename>");
+                    "Usage: java it.mondogrua.explorations.Tail <filename>");
             return;
         }
 
