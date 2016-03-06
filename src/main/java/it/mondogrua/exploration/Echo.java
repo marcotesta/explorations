@@ -1,13 +1,10 @@
 package it.mondogrua.exploration;
 
-import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.util.Scanner;
 
 public class Echo implements Runnable {
@@ -23,22 +20,22 @@ public class Echo implements Runnable {
 
     @Override
     public void run() {
-        Writer writer = null;
+        Scanner input = null;
+        RandomAccessFile output = null;
         try {
-            Scanner reader = new Scanner(inputStream);
-
-            writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(outputFileName)));
+            input = new Scanner(inputStream);
+            output = new RandomAccessFile(outputFileName, "rw");
 
             try {
-                while (reader.hasNextLine()) {
-                    String line = reader.nextLine();
-                    writer.write(line);
-                    writer.write("\n");
-                    writer.flush();
+                while (input.hasNextLine()) {
+
+                    String line = input.nextLine();
+                    output.seek(output.length());
+                    output.write(line.getBytes());
+                    output.write('\n');
                 }
             } finally {
-                reader.close();
+                input.close();
             }
         } catch (UnsupportedEncodingException e) {
             // TODO Auto-generated catch block
@@ -51,10 +48,13 @@ public class Echo implements Runnable {
             e.printStackTrace();
         } finally {
             try {
-                if (writer != null) {
-                    writer.close();
+                if (output != null) {
+                    output.close();
                 }
             } catch (IOException e) {
+            }
+            if (input != null) {
+                input.close();
             }
         }
     }
