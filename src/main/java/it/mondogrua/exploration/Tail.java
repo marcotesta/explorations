@@ -77,11 +77,11 @@ public class Tail implements Runnable {
         return null;
     }
 
-    private void readLines(final RandomAccessFile reader) throws IOException {
+    private void readLines(final RandomAccessFile file) throws IOException {
         ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream(64);
 
         byte inputBuffer[] = new byte[DEFAULT_BUFER_SIZE];
-        int num = reader.read(inputBuffer);
+        int num = file.read(inputBuffer);
         while (run && num != -1) {
             for (int i = 0; i < num; i++) {
                 final byte ch = inputBuffer[i];
@@ -93,7 +93,7 @@ public class Tail implements Runnable {
                     outputBuffer.write(ch);
                 }
             }
-            num = reader.read(inputBuffer);
+            num = file.read(inputBuffer);
         }
     }
 
