@@ -8,9 +8,9 @@ import java.io.RandomAccessFile;
 public class Tail implements Runnable {
 
     private static final int DEFAULT_RETRY_DELAY = 1000;
-    private static final int DEFAULT_BUFER_SIZE = 4096;
+    private static final int DEFAULT_BUFFER_SIZE = 4096;
 
-    public interface Listener {
+    public interface TailListener {
 
         void fileNotFound();
 
@@ -20,11 +20,11 @@ public class Tail implements Runnable {
     }
 
     private final String fileName;
-    private final Listener listener;
+    private final TailListener listener;
 
     private volatile boolean run = true;
 
-    public Tail(final String aFileName, final Listener aListener) {
+    public Tail(final String aFileName, final TailListener aListener) {
         this.fileName = aFileName;
         this.listener = aListener;
     }
@@ -80,7 +80,7 @@ public class Tail implements Runnable {
     private void readLines(final RandomAccessFile file) throws IOException {
         ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream(64);
 
-        byte inputBuffer[] = new byte[DEFAULT_BUFER_SIZE];
+        byte inputBuffer[] = new byte[DEFAULT_BUFFER_SIZE];
         int num = file.read(inputBuffer);
         while (run && num != -1) {
             for (int i = 0; i < num; i++) {
@@ -105,7 +105,7 @@ public class Tail implements Runnable {
             return;
         }
 
-        Tail tail = new Tail(args[0], new Listener() {
+        Tail tail = new Tail(args[0], new TailListener() {
 
             @Override
             public void fileNotFound() {
