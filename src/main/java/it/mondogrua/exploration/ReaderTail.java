@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
 
-public class ReaderTail implements Runnable {
+public class ReaderTail {
 
     private static final int DEFAULT_RETRY_DELAY = 1000;
     private static final int DEFAULT_BUFFER_SIZE = 4096;
@@ -49,35 +49,26 @@ public class ReaderTail implements Runnable {
         }
     }
 
-    private final Reader reader;
-    private final TailListener listener;
-
     private volatile boolean run = true;
-
-    public ReaderTail(final Reader aReader, final TailListener aListener) {
-        this.reader = aReader;
-        this.listener = aListener;
-    }
 
     public void stop() {
         this.run = false;
     }
 
-    @Override
-    public void run() {
+    public void tail(final Reader aReader, final TailListener aListener) {
 
         try {
             while (run) {
-                readLines(reader, listener);
+                readLines(aReader, aListener);
                 Thread.sleep(DEFAULT_RETRY_DELAY);
             }
         } catch (final Exception e) {
-            listener.handle(e);
+            aListener.handle(e);
             stop();
         } finally {
             try {
-                if (reader != null) {
-                    reader.close();
+                if (aReader != null) {
+                    aReader.close();
                 }
             } catch (final IOException ioe) {
                 // ignore
@@ -122,7 +113,8 @@ public class ReaderTail implements Runnable {
             }});
 
 
-        ReaderTail tail = new ReaderTail(fileReader, new TailListener() {
+        ReaderTail tail = new ReaderTail();
+        tail.tail(fileReader, new TailListener() {
 
             @Override
             public void handle(String line) {
@@ -135,6 +127,5 @@ public class ReaderTail implements Runnable {
             }
 
         });
-        tail.run();
     }
 }
