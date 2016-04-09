@@ -22,8 +22,11 @@ public class BufferedReaderTail {
     }
 
     public static class ReaderOpener {
+
         private volatile boolean run = true;
-        public FileReader openFileReader(String aFileName, ReaderOpenerListener aOpenerListener) {
+
+        public FileReader openFileReader(String aFileName,
+                ReaderOpenerListener aOpenerListener) {
             while (run) {
                 try {
                     FileReader file = new FileReader(aFileName);
@@ -42,6 +45,7 @@ public class BufferedReaderTail {
             }
             return null;
         }
+
         public void stop() {
             this.run = false;
         }
@@ -53,7 +57,8 @@ public class BufferedReaderTail {
         this.run = false;
     }
 
-    public void tail(final BufferedReader aReader, final TailListener aListener) {
+    public void tail(final BufferedReader aReader,
+            final TailListener aListener) {
 
         try {
             while (run) {
@@ -66,7 +71,8 @@ public class BufferedReaderTail {
         }
     }
 
-    private void readLines(final BufferedReader aFile, TailListener aListener) throws IOException {
+    private void readLines(final BufferedReader aFile, TailListener aListener)
+            throws IOException {
         while (run) {
             String string = aFile.readLine();
             if (string == null) {
@@ -85,12 +91,14 @@ public class BufferedReaderTail {
         }
         String aFileName = args[0];
 
-        FileReader fileReader = new ReaderOpener().openFileReader(aFileName, new ReaderOpenerListener(){
+        FileReader fileReader = new ReaderOpener().openFileReader(aFileName,
+                new ReaderOpenerListener() {
 
-            @Override
-            public void fileNotFound() {
-                System.out.println(".");
-            }});
+                    @Override
+                    public void fileNotFound() {
+                        System.out.println(".");
+                    }
+                });
 
         try {
             BufferedReaderTail tail = new BufferedReaderTail();

@@ -24,8 +24,11 @@ public class ReaderTail {
     }
 
     public static class ReaderOpener {
+
         private volatile boolean run = true;
-        public FileReader openFileReader(String aFileName, ReaderOpenerListener aOpenerListener) {
+
+        public FileReader openFileReader(String aFileName,
+                ReaderOpenerListener aOpenerListener) {
             while (run) {
                 try {
                     FileReader file = new FileReader(aFileName);
@@ -44,6 +47,7 @@ public class ReaderTail {
             }
             return null;
         }
+
         public void stop() {
             this.run = false;
         }
@@ -76,7 +80,8 @@ public class ReaderTail {
         }
     }
 
-    private void readLines(final Reader aFile, TailListener aListener) throws IOException {
+    private void readLines(final Reader aFile, TailListener aListener)
+            throws IOException {
         char inputBuffer[] = new char[DEFAULT_BUFFER_SIZE];
         while (run) {
             int num = aFile.read(inputBuffer);
@@ -105,13 +110,14 @@ public class ReaderTail {
         }
         String aFileName = args[0];
 
-        FileReader fileReader = new ReaderOpener().openFileReader(aFileName, new ReaderOpenerListener(){
+        FileReader fileReader = new ReaderOpener().openFileReader(aFileName,
+                new ReaderOpenerListener() {
 
-            @Override
-            public void fileNotFound() {
-                System.out.println(".");
-            }});
-
+                    @Override
+                    public void fileNotFound() {
+                        System.out.println(".");
+                    }
+                });
 
         ReaderTail tail = new ReaderTail();
         tail.tail(fileReader, new TailListener() {
