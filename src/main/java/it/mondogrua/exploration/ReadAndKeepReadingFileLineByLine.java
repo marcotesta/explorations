@@ -1,15 +1,13 @@
 package it.mondogrua.exploration;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
 
-public class ReaderTail {
+public class ReadAndKeepReadingFileLineByLine {
 
     private static final int DEFAULT_RETRY_DELAY = 1000;
-    private static final int DEFAULT_BUFFER_SIZE = 4096;
 
     public static interface TailListener {
 
@@ -59,7 +57,8 @@ public class ReaderTail {
         this.run = false;
     }
 
-    public void tail(final Reader aReader, final TailListener aListener) {
+    public void tail(final BufferedReader aReader,
+            final TailListener aListener) {
 
         try {
             while (run) {
@@ -69,35 +68,17 @@ public class ReaderTail {
         } catch (final Exception e) {
             aListener.handle(e);
             stop();
-        } finally {
-            try {
-                if (aReader != null) {
-                    aReader.close();
-                }
-            } catch (final IOException ioe) {
-                // ignore
-            }
         }
     }
 
-    private void readLines(final Reader aFile, TailListener aListener)
+    private void readLines(final BufferedReader aFile, TailListener aListener)
             throws IOException {
-        char inputBuffer[] = new char[DEFAULT_BUFFER_SIZE];
         while (run) {
-            int num = aFile.read(inputBuffer);
-            if (num == -1) {
+            String string = aFile.readLine();
+            if (string == null) {
                 break;
             }
-            StringWriter outputBuffer = new StringWriter(64);
-            for (int i = 0; i < num; i++) {
-                char ch = inputBuffer[i];
-                if (ch == '\n') {
-                    aListener.handle(outputBuffer.toString());
-                    outputBuffer = new StringWriter(64);
-                } else {
-                    outputBuffer.write(ch);
-                }
-            }
+            aListener.handle(string);
         }
     }
 
@@ -119,19 +100,25 @@ public class ReaderTail {
                     }
                 });
 
-        ReaderTail tail = new ReaderTail();
-        tail.tail(fileReader, new TailListener() {
+        try {
+            ReadAndKeepReadingFileLineByLine tail = new ReadAndKeepReadingFileLineByLine();
+            tail.tail(new BufferedReader(fileReader), new TailListener() {
 
-            @Override
-            public void handle(String line) {
-                System.out.println(line);
+                @Override
+                public void handle(String line) {
+                    System.out.println(line);
+                }
+
+                @Override
+                public void handle(Exception ex) {
+                    System.out.println(ex.getMessage());
+                }
+            });
+        } finally {
+            try {
+                fileReader.close();
+            } catch (IOException e) {
             }
-
-            @Override
-            public void handle(Exception ex) {
-                System.out.println(ex.getMessage());
-            }
-
-        });
+        }
     }
 }
