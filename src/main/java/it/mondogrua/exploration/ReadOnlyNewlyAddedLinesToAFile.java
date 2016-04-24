@@ -12,11 +12,14 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
 
     public interface TailListener {
 
-        void fileNotFound();
-
         void handle(String line);
 
         void handle(Exception ex);
+    }
+
+    public static interface ReaderOpenerListener {
+
+        void fileNotFound();
     }
 
     private final String fileName;
@@ -38,7 +41,7 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
     public void run() {
         RandomAccessFile file = null;
         try {
-            file = openFile();
+            file = openFile(fileName, createReaderOpenerListener());
             while (run) {
                 if (moreToRead(file)) {
                     readLines(file);
@@ -63,8 +66,9 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
         return file.length() > file.getFilePointer();
     }
 
-    private RandomAccessFile openFile() throws InterruptedException,
-            IOException {
+    private RandomAccessFile openFile(String fileName,
+            ReaderOpenerListener aOpenerListener) throws InterruptedException,
+                    IOException {
         while (run) {
             try {
                 RandomAccessFile file = new RandomAccessFile(fileName, "r");
@@ -73,7 +77,7 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
                     return file;
                 }
             } catch (final FileNotFoundException e) {
-                listener.fileNotFound();
+                aOpenerListener.fileNotFound();
                 Thread.sleep(DEFAULT_RETRY_DELAY);
             }
         }
@@ -118,11 +122,6 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
         return new TailListener() {
 
             @Override
-            public void fileNotFound() {
-                System.out.println(".");
-            }
-
-            @Override
             public void handle(String line) {
                 System.out.println(line);
             }
@@ -130,6 +129,17 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
             @Override
             public void handle(Exception ex) {
                 System.out.println(ex.getMessage());
+            }
+
+        };
+    }
+
+    private ReaderOpenerListener createReaderOpenerListener() {
+        return new ReaderOpenerListener() {
+
+            @Override
+            public void fileNotFound() {
+                System.out.println(".");
             }
 
         };
