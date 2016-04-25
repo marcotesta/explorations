@@ -7,12 +7,12 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.Scanner;
 
-public class ReadLinesFromConsoleAndWriteAtTheEndOfFile implements Runnable {
+public class WriteAtTheEndOfFile implements Runnable {
 
     private InputStream inputStream;
     private String outputFileName;
 
-    public ReadLinesFromConsoleAndWriteAtTheEndOfFile(InputStream inputStream, String outputFileName) {
+    public WriteAtTheEndOfFile(InputStream inputStream, String outputFileName) {
         super();
         this.inputStream = inputStream;
         this.outputFileName = outputFileName;
@@ -66,7 +66,7 @@ public class ReadLinesFromConsoleAndWriteAtTheEndOfFile implements Runnable {
                     "Usage: java it.mondogrua.explorations.Echo <filename>");
             return;
         }
-        ReadLinesFromConsoleAndWriteAtTheEndOfFile echo = new ReadLinesFromConsoleAndWriteAtTheEndOfFile(System.in, args[0]);
+        WriteAtTheEndOfFile echo = new WriteAtTheEndOfFile(System.in, args[0]);
         echo.run();
     }
 }
