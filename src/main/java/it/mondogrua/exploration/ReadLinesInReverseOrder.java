@@ -1,7 +1,6 @@
 package it.mondogrua.exploration;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -17,8 +16,6 @@ public class ReadLinesInReverseOrder implements Runnable {
 
     private RandomAccessFile in;
 
-    private long currentLineStart = -1;
-    private long currentLineEnd = -1;
     private long currentPos = -1;
 
     private final TailListener listener;
@@ -34,12 +31,9 @@ public class ReadLinesInReverseOrder implements Runnable {
 
     @Override
     public void run() {
-        File file = new File(fileName);
         try {
-            in = new RandomAccessFile(file, "r");
-            currentLineStart = file.length();
-            currentLineEnd = file.length();
-            currentPos = currentLineEnd;
+            in = new RandomAccessFile(fileName, "r");
+            currentPos = in.length();
 
             readLines();
         } catch (final Exception e) {
@@ -59,18 +53,29 @@ public class ReadLinesInReverseOrder implements Runnable {
         this.run = false;
     }
 
-    private long previousStartPosition(long currentTerminator)
+    private long previousStartPosition(long pointer, int backSteps)
             throws IOException {
-        long pointer;
-        for (pointer = currentTerminator - 1; pointer >= 0; pointer--) {
+        int terminators = 0;
+
+        if (pointer == in.length()) {
+            pointer--;
+            terminators++;
+        }
+
+        for (; pointer >= 0; pointer--) {
 
             in.seek(pointer);
-            int readByte = in.readByte();
+            int ch = in.readByte();
 
-            if (readByte == '\n') {
+            if (ch == '\n') {
+                terminators++;
+            }
+            if (terminators == backSteps + 1) {
                 pointer++;
                 break;
-            } else if (pointer == 0) {
+            }
+
+            if (pointer == 0 && terminators == backSteps) {
                 break;
             }
         }
@@ -78,24 +83,24 @@ public class ReadLinesInReverseOrder implements Runnable {
     }
 
     private byte read() throws IOException {
-
-        if (currentPos == currentLineEnd) {
-            long previousStartPos = previousStartPosition(currentLineStart - 1);
-            if (previousStartPos == currentPos) {
-                return -1;
-            }
-            currentPos = previousStartPos;
-            currentLineEnd = currentLineStart;
-            currentLineStart = currentPos;
+        if (currentPos == in.length()) {
+            currentPos = previousStartPosition(currentPos, 2);
         }
+
         if (currentPos < 0) {
             return -1;
         }
 
         in.seek(currentPos);
-        byte readByte = in.readByte();
-        currentPos++;
-        return readByte;
+        byte ch = in.readByte();
+
+        if (ch == '\n') {
+            currentPos = previousStartPosition(currentPos, 2);
+        } else {
+            currentPos++;
+        }
+
+        return ch;
     }
 
     private void readLines() throws IOException {
