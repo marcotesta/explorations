@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class ReadLinesInReverseOrder implements Runnable {
+public class ReadLinesInReverseOrder {
 
     public static interface TailListener {
 
@@ -14,14 +14,10 @@ public class ReadLinesInReverseOrder implements Runnable {
         void handle(Exception ex);
     }
 
-    private RandomAccessFile in;
-
-    private long currentPos = -1;
-
+    private final String fileName;
     private final TailListener listener;
-    private volatile boolean run = true;
-
-    private String fileName;
+    private RandomAccessFile file;
+    private long currentPos = -1;
 
     public ReadLinesInReverseOrder(String fileName,
             final TailListener aListener) throws FileNotFoundException {
@@ -29,43 +25,37 @@ public class ReadLinesInReverseOrder implements Runnable {
         this.listener = aListener;
     }
 
-    @Override
-    public void run() {
+    public void readLinesInReversOrder() {
         try {
-            in = new RandomAccessFile(fileName, "r");
-            currentPos = in.length();
+            file = new RandomAccessFile(fileName, "r");
+            currentPos = file.length();
 
             readLines();
         } catch (final Exception e) {
             listener.handle(e);
-            stop();
         } finally {
             try {
-                if (in != null) {
-                    in.close();
+                if (file != null) {
+                    file.close();
                 }
             } catch (final IOException ioe) {
             }
         }
     }
 
-    public void stop() {
-        this.run = false;
-    }
-
     private long previousStartPosition(long pointer, int backSteps)
             throws IOException {
         int terminators = 0;
 
-        if (pointer == in.length()) {
+        if (pointer == file.length()) {
             pointer--;
             terminators++;
         }
 
         for (; pointer >= 0; pointer--) {
 
-            in.seek(pointer);
-            int ch = in.readByte();
+            file.seek(pointer);
+            int ch = file.readByte();
 
             if (ch == '\n') {
                 terminators++;
@@ -83,7 +73,7 @@ public class ReadLinesInReverseOrder implements Runnable {
     }
 
     private byte read() throws IOException {
-        if (currentPos == in.length()) {
+        if (currentPos == file.length()) {
             currentPos = previousStartPosition(currentPos, 2);
         }
 
@@ -91,8 +81,8 @@ public class ReadLinesInReverseOrder implements Runnable {
             return -1;
         }
 
-        in.seek(currentPos);
-        byte ch = in.readByte();
+        file.seek(currentPos);
+        byte ch = file.readByte();
 
         if (ch == '\n') {
             currentPos = previousStartPosition(currentPos, 2);
@@ -106,7 +96,7 @@ public class ReadLinesInReverseOrder implements Runnable {
     private void readLines() throws IOException {
         ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream(64);
 
-        while (run) {
+        while (true) {
             byte ch = read();
             if (ch == -1) {
                 return;
@@ -127,7 +117,7 @@ public class ReadLinesInReverseOrder implements Runnable {
         ReadLinesInReverseOrder reverseLineInputStream =
                 new ReadLinesInReverseOrder(fileName, createTailListener());
 
-        reverseLineInputStream.run();
+        reverseLineInputStream.readLinesInReversOrder();
     }
 
     private static TailListener createTailListener() {

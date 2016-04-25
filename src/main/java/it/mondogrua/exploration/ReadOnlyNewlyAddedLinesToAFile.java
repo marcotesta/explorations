@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
+public class ReadOnlyNewlyAddedLinesToAFile {
 
     private static final int DEFAULT_RETRY_DELAY = 1000;
     private static final int DEFAULT_BUFFER_SIZE = 4096;
@@ -24,25 +24,22 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
 
     private final String fileName;
     private final TailListener listener;
-
-    private volatile boolean run = true;
+    private final ReaderOpenerListener openerListener;
 
     public ReadOnlyNewlyAddedLinesToAFile(final String aFileName,
-            final TailListener aListener) {
+            final TailListener aListener, ReaderOpenerListener openerListener) {
         this.fileName = aFileName;
         this.listener = aListener;
+        this.openerListener = openerListener;
     }
 
-    public void stop() {
-        this.run = false;
-    }
-
-    @Override
-    public void run() {
+    public void readNewLines() {
         RandomAccessFile file = null;
         try {
-            file = openFile(fileName, createReaderOpenerListener());
-            while (run) {
+            file = openFile(fileName, openerListener);
+            seefEndOfFile(file);
+
+            while (true) {
                 if (moreToRead(file)) {
                     readLines(file);
                 }
@@ -50,7 +47,6 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
             }
         } catch (final Exception e) {
             listener.handle(e);
-            stop();
         } finally {
             try {
                 if (file != null) {
@@ -62,6 +58,10 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
         }
     }
 
+    private void seefEndOfFile(RandomAccessFile file) throws IOException {
+        file.seek(file.length());
+    }
+
     private boolean moreToRead(RandomAccessFile file) throws IOException {
         return file.length() > file.getFilePointer();
     }
@@ -69,11 +69,10 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
     private RandomAccessFile openFile(String fileName,
             ReaderOpenerListener aOpenerListener) throws InterruptedException,
                     IOException {
-        while (run) {
+        while (true) {
             try {
                 RandomAccessFile file = new RandomAccessFile(fileName, "r");
                 if (file != null) {
-                    file.seek(file.length());
                     return file;
                 }
             } catch (final FileNotFoundException e) {
@@ -81,7 +80,6 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
                 Thread.sleep(DEFAULT_RETRY_DELAY);
             }
         }
-        return null;
     }
 
     private void readLines(final RandomAccessFile file) throws IOException {
@@ -89,7 +87,7 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
 
         byte inputBuffer[] = new byte[DEFAULT_BUFFER_SIZE];
         int num = file.read(inputBuffer);
-        while (run && num != -1) {
+        while (num != -1) {
             for (int i = 0; i < num; i++) {
                 final byte ch = inputBuffer[i];
 
@@ -108,14 +106,13 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
 
         if (args.length != 1) {
             System.out.println(
-                    "Usage: java it.mondogrua.explorations.Tail <filename>");
+                    "Usage: java it.mondogrua.explorations.ReadOnlyNewlyAddedLinesToAFile <filename>");
             return;
         }
-
         ReadOnlyNewlyAddedLinesToAFile tail =
                 new ReadOnlyNewlyAddedLinesToAFile(args[0],
-                        createTailListener());
-        tail.run();
+                        createTailListener(), createReaderOpenerListener());
+        tail.readNewLines();
     }
 
     private static TailListener createTailListener() {
@@ -130,18 +127,16 @@ public class ReadOnlyNewlyAddedLinesToAFile implements Runnable {
             public void handle(Exception ex) {
                 System.out.println(ex.getMessage());
             }
-
         };
     }
 
-    private ReaderOpenerListener createReaderOpenerListener() {
+    private static ReaderOpenerListener createReaderOpenerListener() {
         return new ReaderOpenerListener() {
 
             @Override
             public void fileNotFound() {
                 System.out.println(".");
             }
-
         };
     }
 }
