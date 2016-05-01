@@ -1,72 +1,46 @@
 package it.mondogrua.exploration;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
 import java.util.Scanner;
 
-public class WriteAtTheEndOfFile implements Runnable {
+public class WriteAtTheEndOfFile {
 
-    private InputStream inputStream;
-    private String outputFileName;
+    private RandomAccessFile output;
 
-    public WriteAtTheEndOfFile(InputStream inputStream, String outputFileName) {
-        super();
-        this.inputStream = inputStream;
-        this.outputFileName = outputFileName;
+    public WriteAtTheEndOfFile(RandomAccessFile output) {
+        this.output = output;
     }
 
-    @Override
-    public void run() {
-        Scanner input = null;
-        RandomAccessFile output = null;
+    public void write(String line) {
         try {
-            input = new Scanner(inputStream);
-            output = new RandomAccessFile(outputFileName, "rw");
-
-            try {
-                while (input.hasNextLine()) {
-
-                    String line = input.nextLine();
-                    output.seek(output.length());
-                    output.write(line.getBytes());
-                    output.write('\n');
-                }
-            } finally {
-                input.close();
-            }
-        } catch (UnsupportedEncodingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            output.seek(output.length());
+            output.write(line.getBytes());
+            output.write('\n');
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } finally {
-            try {
-                if (output != null) {
-                    output.close();
-                }
-            } catch (IOException e) {
-            }
-            if (input != null) {
-                input.close();
-            }
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         if (args.length != 1) {
             System.out.println(
                     "Usage: java it.mondogrua.explorations.Echo <filename>");
             return;
         }
-        WriteAtTheEndOfFile echo = new WriteAtTheEndOfFile(System.in, args[0]);
-        echo.run();
+        String outputFileName = args[0];
+        RandomAccessFile output = new RandomAccessFile(outputFileName, "rw");
+
+        WriteAtTheEndOfFile echo = new WriteAtTheEndOfFile(output);
+
+        Scanner input = new Scanner(System.in);
+
+        while (input.hasNextLine()) {
+            String line = input.nextLine();
+            echo.write(line);
+        }
+
+        input.close();
+        output.close();
     }
 }
