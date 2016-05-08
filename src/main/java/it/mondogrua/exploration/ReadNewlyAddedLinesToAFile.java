@@ -43,14 +43,6 @@ public class ReadNewlyAddedLinesToAFile {
             }
         } catch (final Exception e) {
             listener.handle(e);
-        } finally {
-            try {
-                if (file != null) {
-                    file.close();
-                }
-            } catch (final IOException ioe) {
-                // ignore
-            }
         }
     }
 
@@ -93,11 +85,22 @@ public class ReadNewlyAddedLinesToAFile {
 
         RandomAccessFile file = openFile(fileName,
                 createReaderOpenerListener());
-        seekEndOfFile(file);
+        try {
+            seekEndOfFile(file);
 
-        ReadNewlyAddedLinesToAFile tail = new ReadNewlyAddedLinesToAFile(file,
-                createTailListener());
-        tail.readNewLines();
+            ReadNewlyAddedLinesToAFile tail = new ReadNewlyAddedLinesToAFile(file,
+                    createTailListener());
+            tail.readNewLines();
+        } finally {
+            try {
+                if (file != null) {
+                    file.close();
+                }
+            } catch (final IOException ioe) {
+                // ignore
+            }
+        }
+
     }
 
     static RandomAccessFile openFile(String fileName,
