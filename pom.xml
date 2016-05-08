@@ -18,5 +18,10 @@
   </parent>
 
   <dependencies>
+  <dependency>
+    <groupId>it.mondogrua.</groupId>
+    <artifactId>count-cdp</artifactId>
+     <version>0.0.1-SNAPSHOT</version>
+  </dependency>
   </dependencies>
 </project>
